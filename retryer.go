@@ -118,7 +118,7 @@ func (r *Retryer) testAndUpdateState(testArgs string) error {
 }
 
 func (r *Retryer) test(testArgs string, stdout, stderr io.Writer) error {
-	command := exec.Command("/bin/bash", "-c", r.cfg.testCommandName+" "+testArgs)
+	command := exec.Command(r.cfg.shellPath, "-c", r.cfg.testCommandName+" "+testArgs)
 	r.log("Running command:", strings.Join(command.Args, " "))
 	command.Stdout = stdout
 	command.Stderr = stderr

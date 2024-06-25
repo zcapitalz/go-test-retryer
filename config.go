@@ -9,6 +9,7 @@ type Config struct {
 	testCommandName    string
 	testArgs           string
 	verbose            bool
+	shellPath          string
 }
 
 func NewConfigFromArgs(args []string) (Config, error) {
@@ -20,6 +21,7 @@ func NewConfigFromArgs(args []string) (Config, error) {
 	flag.BoolVar(&cfg.verbose, "verbose", false, "verbose mode")
 	flag.StringVar(&cfg.testCommandName, "test-command-name", "go test", `test command name`)
 	flag.StringVar(&cfg.testArgs, "test-args", "", "test arguments")
+	flag.StringVar(&cfg.shellPath, "shell", "/bin/bash", "path to shell")
 	flag.Parse()
 
 	if cfg.maxTotalRetries < 0 || cfg.maxRetriesPerTest < 0 {
