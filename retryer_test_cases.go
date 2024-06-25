@@ -9,6 +9,9 @@ type testCase struct {
 	expectedCommands []string
 }
 
+// Add only test cases for plain mode (-json=false).
+// Tests cases for json mode are generated automatically.
+//
 //nolint:unused
 var testCases = []testCase{
 	{
@@ -48,12 +51,12 @@ var testCases = []testCase{
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    0,
 			testCommandName:    "go test",
-			testArgs:           "-v -json -run=^TestFail$ -count=1 go-test-retryer/test",
+			testArgs:           "-v -run=^TestFail$ -count=1 go-test-retryer/test",
 			verbose:            false,
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
-			"go test -v -json -run=^TestFail$ -count=1 go-test-retryer/test",
+			"go test -v -run=^TestFail$ -count=1 go-test-retryer/test",
 		},
 	},
 	{
@@ -63,12 +66,12 @@ var testCases = []testCase{
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
-			testArgs:           "-v -json -run=^TestFail$ -count=1 go-test-retryer/test",
+			testArgs:           "-v -run=^TestFail$ -count=1 go-test-retryer/test",
 			verbose:            false,
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
-			"go test -v -json -run=^TestFail$ -count=1 go-test-retryer/test",
+			"go test -v -run=^TestFail$ -count=1 go-test-retryer/test",
 		},
 	},
 	{
