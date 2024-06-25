@@ -26,7 +26,9 @@ func Test(t *testing.T) {
 	for _, tc := range testCases {
 		newTest := func(tc testCase, expectedStdoutStr, expectedStderrStr string) func(*testing.T) {
 			return func(t *testing.T) {
-				logExpectedOutput(t, expectedStdoutStr, expectedStderrStr, tc.cfg.testOutputTypeJSON)
+				if tc.cfg.testOutputTypeJSON {
+					debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
+				}
 
 				if tc.testConfig != "" {
 					testConfigPath := createTestConfigFile(t, tc.testConfig)
@@ -180,11 +182,5 @@ func escapeQuotes(str string) string {
 func debugLogf(t *testing.T, format string, args ...any) {
 	if debug {
 		t.Logf(format, args...)
-	}
-}
-
-func logExpectedOutput(t *testing.T, expectedStdoutStr, expectedStderrStr string, outputTypeJSON bool) {
-	if outputTypeJSON {
-		debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
 	}
 }
