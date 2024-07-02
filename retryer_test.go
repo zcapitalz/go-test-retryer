@@ -26,6 +26,8 @@ func Test(t *testing.T) {
 	for _, tc := range testCases {
 		newTest := func(tc testCase, expectedStdoutStr, expectedStderrStr string) func(*testing.T) {
 			return func(t *testing.T) {
+				t.Parallel()
+
 				if tc.cfg.testOutputTypeJSON {
 					debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
 				}
