@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	rt "go-test-retryer"
+	rt "github.com/zcapitalz/go-test-retryer"
 )
 
 func main() {

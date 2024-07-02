@@ -41,10 +41,10 @@ func Test(t *testing.T) {
 				output := new(buffer)
 				retryerArgs := fmt.Sprintf(`-json=%v -total-retries=%v -retries-per-test=%v -test-command-name="%v" -verbose=%v`,
 					tc.cfg.testOutputTypeJSON, tc.cfg.maxTotalRetries, tc.cfg.maxRetriesPerTest, tc.cfg.testCommandName, tc.cfg.verbose)
-				command := fmt.Sprintf(`go run ./cmd/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs))
+				command := fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs))
 				debugLogf(t, "Command:\n%v\n", command)
 				exitCode, err := runCommand(
-					fmt.Sprintf(`go run ./cmd/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs)),
+					fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs)),
 					io.MultiWriter(stdout, output),
 					io.MultiWriter(stderr, output))
 				if tc.cfg.testOutputTypeJSON {
