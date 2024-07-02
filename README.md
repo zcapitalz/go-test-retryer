@@ -3,8 +3,15 @@
 CLI tool that runs `go test`(or another command from `--test-command-name`) with arguments from `--test-args`, parses test results from output and retries failed tests according to `--retries-per-test` and `--total-reries` limits. If `--total-retries` is 0, then no global limit is applied.
 
 Testing commands are run using provided `--shell`(default "/bin/bash") with -c option.
+<br><br>
 
-**Usage of go-test-retryer**:
+**Installation**:
+```
+go install github.com/zcapitalz/go-test-retryer/cmd/go-test-retryer@latest
+```
+<br>
+
+**Usage**:
 - --test-args string  
 &emsp;&emsp;test arguments  
 - --test-command-name string  
@@ -19,10 +26,9 @@ Testing commands are run using provided `--shell`(default "/bin/bash") with -c o
 &emsp;&emsp;verbose mode
 - --shell string  
 &emsp;&emsp;path to shell (default "/bin/bash")  
+<br>
 
-**Return values**:
+**Exit codes**:
 - `0`: if all tests that failed during any run are successfuly retried
 - `1`: for unexpected error
 - `*`: whatever was returned by last run otherwise
-
-<br>
