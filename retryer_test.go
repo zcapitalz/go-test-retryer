@@ -24,50 +24,7 @@ func init() {
 
 func Test(t *testing.T) {
 	for _, tc := range testCases {
-		newTest := func(tc testCase, expectedStdoutStr, expectedStderrStr string) func(*testing.T) {
-			return func(t *testing.T) {
-				t.Parallel()
-
-				if tc.cfg.testOutputTypeJSON {
-					debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
-				}
-
-				if tc.testConfig != "" {
-					testConfigPath := createTestConfigFile(t, tc.testConfig)
-					defer os.Remove(testConfigPath)
-					tc.cfg.testArgs += " -config-path=" + testConfigPath
-				}
-
-				stdout := new(bytes.Buffer)
-				stderr := new(bytes.Buffer)
-				output := new(buffer)
-				retryerArgs := fmt.Sprintf(`-json=%v -total-retries=%v -retries-per-test=%v -test-command-name="%v" -verbose=%v`,
-					tc.cfg.testOutputTypeJSON, tc.cfg.maxTotalRetries, tc.cfg.maxRetriesPerTest, tc.cfg.testCommandName, tc.cfg.verbose)
-				command := fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs))
-				debugLogf(t, "Command:\n%v\n", command)
-				exitCode, err := runCommand(
-					fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs)),
-					io.MultiWriter(stdout, output),
-					io.MultiWriter(stderr, output))
-				if tc.cfg.testOutputTypeJSON {
-					debugLogf(t, "Actual output:\n%v\n", output.String())
-				}
-				if err != nil {
-					_, ok := err.(*exec.ExitError)
-					require.True(t, ok, fmt.Sprintf("command execution error: %v", err))
-				}
-				assert.Equal(t, tc.expectedExitCode, exitCode)
-
-				checkStdout(t, strings.NewReader(expectedStdoutStr), stdout, tc.cfg.testOutputTypeJSON)
-				checkStderr(t, strings.NewReader(expectedStderrStr), stderr)
-			}
-		}
-
-		expectedStdoutStr, expectedStderrStr := getTestCaseExpectedOutputStr(t, tc)
-		t.Run(
-			tc.name,
-			newTest(tc, expectedStdoutStr, expectedStderrStr),
-		)
+		t.Run(tc.name, testFromTestCase(tc))
 
 		tc.name += "JSON"
 		tc.cfg.testOutputTypeJSON = true
@@ -75,11 +32,48 @@ func Test(t *testing.T) {
 		for i, command := range tc.expectedCommands {
 			tc.expectedCommands[i] = command + " -json"
 		}
-		expectedStdoutStr, expectedStderrStr = getTestCaseExpectedOutputStr(t, tc)
-		t.Run(
-			tc.name,
-			newTest(tc, expectedStdoutStr, expectedStderrStr),
-		)
+		t.Run(tc.name, testFromTestCase(tc))
+	}
+}
+
+func testFromTestCase(tc testCase) func(*testing.T) {
+	return func(t *testing.T) {
+		t.Parallel()
+
+		expectedStdoutStr, expectedStderrStr := getTestCaseExpectedOutputStr(t, tc)
+
+		if tc.cfg.testOutputTypeJSON {
+			debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
+		}
+
+		if tc.testConfig != "" {
+			testConfigPath := createTestConfigFile(t, tc.testConfig)
+			defer os.Remove(testConfigPath)
+			tc.cfg.testArgs += " -config-path=" + testConfigPath
+		}
+
+		stdout := new(bytes.Buffer)
+		stderr := new(bytes.Buffer)
+		output := new(buffer)
+		retryerArgs := fmt.Sprintf(`-json=%v -total-retries=%v -retries-per-test=%v -test-command-name="%v" -verbose=%v`,
+			tc.cfg.testOutputTypeJSON, tc.cfg.maxTotalRetries, tc.cfg.maxRetriesPerTest, tc.cfg.testCommandName, tc.cfg.verbose)
+		command := fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs))
+		debugLogf(t, "Command:\n%v\n", command)
+		exitCode, err := runCommand(
+			fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs)),
+			io.MultiWriter(stdout, output),
+			io.MultiWriter(stderr, output))
+		if tc.cfg.testOutputTypeJSON {
+			debugLogf(t, "Actual output:\n%v\n", output.String())
+		}
+		if err != nil {
+			_, ok := err.(*exec.ExitError)
+			require.True(t, ok, fmt.Sprintf("command execution error: %v", err))
+		}
+		assert.Equal(t, tc.expectedExitCode, exitCode)
+
+		checkStdout(t, strings.NewReader(expectedStdoutStr), stdout, tc.cfg.testOutputTypeJSON)
+		checkStderr(t, strings.NewReader(expectedStderrStr), stderr)
 	}
 }
 
