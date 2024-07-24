@@ -3,8 +3,8 @@ package retryer
 //nolint:unused
 type testCase struct {
 	name             string
-	cfg              Config
-	testConfig       string
+	retryerCfg       Config
+	testCfg          string
 	expectedExitCode int
 	expectedCommands []string
 }
@@ -16,13 +16,14 @@ type testCase struct {
 var testCases = []testCase{
 	{
 		name: "SuccessfulTestRetriesNotAllowed",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    0,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestSuccess$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 0,
 		expectedCommands: []string{
@@ -31,13 +32,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "SuccessfulTestRetriesAllowed",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestSuccess$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 0,
 		expectedCommands: []string{
@@ -46,13 +48,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "FailedTestRetriesNotAllowed1",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    0,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestFail$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -61,13 +64,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "FailedTestRetriesNotAllowed2",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestFail$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -76,13 +80,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "FailedTestRetriesAllowed1",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestFail$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -92,13 +97,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "FailedTestRetriesAllowed2",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    0,
 			testCommandName:    "go test",
 			testArgs:           "-v -run=^TestFail$ -count=1 github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -108,13 +114,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "NotCompilableRetriesNotAllowed",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  0,
 			maxTotalRetries:    0,
 			testCommandName:    "go test",
 			testArgs:           "-v -count=1 github.com/zcapitalz/go-test-retryer/test/notcompilable",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -123,13 +130,14 @@ var testCases = []testCase{
 	},
 	{
 		name: "NotCompilableRetriesAllowed",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
 			testArgs:           "-v -count=1 github.com/zcapitalz/go-test-retryer/test/notcompilable",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
 		expectedExitCode: 1,
 		expectedCommands: []string{
@@ -138,15 +146,16 @@ var testCases = []testCase{
 	},
 	{
 		name: "FlakyTestRetriesAllowed",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  2,
 			maxTotalRetries:    2,
 			testCommandName:    "go test",
 			testArgs:           "-v -count=1 -run=^TestFlaky$ github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
-		testConfig:       "flaky_test_failures_left: 2",
+		testCfg:          "flaky_test_failures_left: 2",
 		expectedExitCode: 0,
 		expectedCommands: []string{
 			"go test -v -count=1 -run=^TestFlaky$ github.com/zcapitalz/go-test-retryer/test",
@@ -156,15 +165,16 @@ var testCases = []testCase{
 	},
 	{
 		name: "FlakyTestNotEnoughRetries",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    1,
 			testCommandName:    "go test",
 			testArgs:           "-v -count=1 -run=^TestFlaky$ github.com/zcapitalz/go-test-retryer/test",
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
-		testConfig:       "flaky_test_failures_left: 2",
+		testCfg:          "flaky_test_failures_left: 2",
 		expectedExitCode: 1,
 		expectedCommands: []string{
 			"go test -v -count=1 -run=^TestFlaky$ github.com/zcapitalz/go-test-retryer/test",
@@ -173,15 +183,16 @@ var testCases = []testCase{
 	},
 	{
 		name: "FlakyAndFailedTest",
-		cfg: Config{
+		retryerCfg: Config{
 			testOutputTypeJSON: false,
 			maxRetriesPerTest:  1,
 			maxTotalRetries:    2,
 			testCommandName:    "go test",
 			testArgs:           `-v -count=1 -run="^(TestFlaky|TestFail)$" github.com/zcapitalz/go-test-retryer/test`,
 			verbose:            false,
+			shellPath:          "/bin/bash",
 		},
-		testConfig:       "flaky_test_failures_left: 1",
+		testCfg:          "flaky_test_failures_left: 1",
 		expectedExitCode: 1,
 		expectedCommands: []string{
 			`go test -v -count=1 -run="^(TestFlaky|TestFail)" github.com/zcapitalz/go-test-retryer/test`,

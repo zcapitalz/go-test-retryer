@@ -27,8 +27,8 @@ func Test(t *testing.T) {
 		t.Run(tc.name, testFromTestCase(tc))
 
 		tc.name += "JSON"
-		tc.cfg.testOutputTypeJSON = true
-		tc.cfg.testArgs += " -json"
+		tc.retryerCfg.testOutputTypeJSON = true
+		tc.retryerCfg.testArgs += " -json"
 		for i, command := range tc.expectedCommands {
 			tc.expectedCommands[i] = command + " -json"
 		}
@@ -42,28 +42,31 @@ func testFromTestCase(tc testCase) func(*testing.T) {
 
 		expectedStdoutStr, expectedStderrStr := getTestCaseExpectedOutputStr(t, tc)
 
-		if tc.cfg.testOutputTypeJSON {
+		if tc.retryerCfg.testOutputTypeJSON {
 			debugLogf(t, "Expected output:\n%v\n%v\n", expectedStdoutStr, expectedStderrStr)
 		}
 
-		if tc.testConfig != "" {
-			testConfigPath := createTestConfigFile(t, tc.testConfig)
+		if tc.testCfg != "" {
+			testConfigPath := createTestConfigFile(t, tc.testCfg)
 			defer os.Remove(testConfigPath)
-			tc.cfg.testArgs += " -config-path=" + testConfigPath
+			tc.retryerCfg.testArgs += " -config-path=" + testConfigPath
 		}
 
 		stdout := new(bytes.Buffer)
 		stderr := new(bytes.Buffer)
 		output := new(buffer)
-		retryerArgs := fmt.Sprintf(`-json=%v -total-retries=%v -retries-per-test=%v -test-command-name="%v" -verbose=%v`,
-			tc.cfg.testOutputTypeJSON, tc.cfg.maxTotalRetries, tc.cfg.maxRetriesPerTest, tc.cfg.testCommandName, tc.cfg.verbose)
-		command := fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs))
+		retryerArgs := fmt.Sprintf(
+			`-json=%v -total-retries=%v -retries-per-test=%v -test-command-name="%v" -verbose=%v -shell=%v`,
+			tc.retryerCfg.testOutputTypeJSON, tc.retryerCfg.maxTotalRetries, tc.retryerCfg.maxRetriesPerTest,
+			tc.retryerCfg.testCommandName, tc.retryerCfg.verbose, tc.retryerCfg.shellPath)
+		command := fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.retryerCfg.testArgs))
 		debugLogf(t, "Command:\n%v\n", command)
 		exitCode, err := runCommand(
-			fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.cfg.testArgs)),
+			tc.retryerCfg.shellPath,
+			fmt.Sprintf(`go run ./cmd/go-test-retryer/main.go %v -test-args="%v"`, retryerArgs, escapeQuotes(tc.retryerCfg.testArgs)),
 			io.MultiWriter(stdout, output),
 			io.MultiWriter(stderr, output))
-		if tc.cfg.testOutputTypeJSON {
+		if tc.retryerCfg.testOutputTypeJSON {
 			debugLogf(t, "Actual output:\n%v\n", output.String())
 		}
 		if err != nil {
@@ -72,26 +75,26 @@ func testFromTestCase(tc testCase) func(*testing.T) {
 		}
 		assert.Equal(t, tc.expectedExitCode, exitCode)
 
-		checkStdout(t, strings.NewReader(expectedStdoutStr), stdout, tc.cfg.testOutputTypeJSON)
+		checkStdout(t, strings.NewReader(expectedStdoutStr), stdout, tc.retryerCfg.testOutputTypeJSON)
 		checkStderr(t, strings.NewReader(expectedStderrStr), stderr)
 	}
 }
 
 func getTestCaseExpectedOutputStr(t *testing.T, tc testCase) (string, string) {
 	testConfigPath := ""
-	if tc.testConfig != "" {
-		testConfigPath = createTestConfigFile(t, tc.testConfig)
+	if tc.testCfg != "" {
+		testConfigPath = createTestConfigFile(t, tc.testCfg)
 		defer os.Remove(testConfigPath)
 	}
 
 	expectedStdout := new(bytes.Buffer)
 	expectedStderr := new(bytes.Buffer)
 	for _, command := range tc.expectedCommands {
-		if tc.testConfig != "" {
+		if tc.testCfg != "" {
 			command += " -config-path=" + testConfigPath
 		}
 
-		_, err := runCommand(command, expectedStdout, expectedStderr)
+		_, err := runCommand(tc.retryerCfg.shellPath, command, expectedStdout, expectedStderr)
 		if err != nil {
 			_, ok := err.(*exec.ExitError)
 			require.True(t, ok, fmt.Sprintf("unexpected exec error: %v", err))
@@ -101,8 +104,8 @@ func getTestCaseExpectedOutputStr(t *testing.T, tc testCase) (string, string) {
 	return readerToString(t, expectedStdout), readerToString(t, expectedStderr)
 }
 
-func runCommand(command string, stdout, stderr io.Writer) (int, error) {
-	cmd := exec.Command("/bin/bash", "-c", command)
+func runCommand(shellPath, command string, stdout, stderr io.Writer) (int, error) {
+	cmd := exec.Command(shellPath, "-c", command)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
